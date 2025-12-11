@@ -1,5 +1,6 @@
 package com.example.anapo.admin.application.controller;
 
+import com.example.anapo.admin.application.dto.ReportProcessDto;
 import com.example.anapo.admin.application.service.ReportActionService;
 import com.example.anapo.user.application.report.dto.ReportResponseDto;
 import com.example.anapo.user.domain.report.repository.ReportRepository;

@@ -11,4 +11,6 @@ public class CommunityRequestDto {
     private String content;
     private String writer;
     private Long accId; // Account FK (글쓴이 ID) - 옵션
+
+    private String category;
 }

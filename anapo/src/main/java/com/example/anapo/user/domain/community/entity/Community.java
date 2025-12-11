@@ -2,15 +2,14 @@ package com.example.anapo.user.domain.community.entity;
 
 import com.example.anapo.user.domain.account.entity.Account;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*; // ✅ [중요] 여기에 Setter가 들어있습니다!
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Getter
+@Setter // ✅ 이제 에러 없이 작동합니다!
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -20,27 +19,24 @@ public class Community {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String title;     // 제목
+    private String title;
 
     @Column(columnDefinition = "TEXT")
-    private String content;   // 내용
+    private String content;
 
-    private String writer;    // 작성자 이름
+    private String writer;
+
+    private String category;
+
+    private int views;
+    private int likes;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    private Account account;  // 작성자 FK (옵션)
+    private Account account;
 
+    @CreationTimestamp
     private LocalDateTime createdAt;
+
+    @CreationTimestamp
     private LocalDateTime updatedAt;
-
-    @PrePersist
-    public void prePersist() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    public void preUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
 }

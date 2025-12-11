@@ -9,45 +9,43 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/community")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:3000") // 필수!
 public class CommunityController {
 
     private final CommunityService communityService;
 
-    // 게시글 생성
     @PostMapping
     public ResponseEntity<?> create(@RequestBody CommunityRequestDto dto) {
         return ResponseEntity.ok(communityService.create(dto));
     }
 
-    // 전체 조회
     @GetMapping
     public ResponseEntity<?> getAll() {
         return ResponseEntity.ok(communityService.getAll());
     }
 
-    // 상세 조회
     @GetMapping("/{id}")
     public ResponseEntity<?> get(@PathVariable Long id) {
         return ResponseEntity.ok(communityService.get(id));
     }
 
-    // 수정
+    // ✅ [추가됨] 좋아요 기능
+    @PostMapping("/{id}/like")
+    public ResponseEntity<?> likePost(@PathVariable Long id) {
+        return ResponseEntity.ok(communityService.like(id));
+    }
+
     @PutMapping("/{id}")
-    public ResponseEntity<?> update(
-            @PathVariable Long id,
-            @RequestBody CommunityRequestDto dto
-    ) {
+    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody CommunityRequestDto dto) {
         return ResponseEntity.ok(communityService.update(id, dto));
     }
 
-    // 삭제
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable Long id) {
         communityService.delete(id);
         return ResponseEntity.ok("삭제 완료!");
     }
 
-    // 제목 검색 + 페이징
     @GetMapping("/search/title")
     public ResponseEntity<?> searchByTitle(
             @RequestParam String keyword,
@@ -57,7 +55,6 @@ public class CommunityController {
         return ResponseEntity.ok(communityService.searchByTitle(keyword, page, size));
     }
 
-    // 작성자 검색 + 페이징
     @GetMapping("/search/writer")
     public ResponseEntity<?> searchByWriter(
             @RequestParam String writer,

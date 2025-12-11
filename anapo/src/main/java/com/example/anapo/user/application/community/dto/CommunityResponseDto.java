@@ -13,4 +13,9 @@ public class CommunityResponseDto {
     private String writer;
     private String createdAt;
     private String updatedAt;
+
+    private String category;
+
+    private int views;
+    private int likes;
 }
