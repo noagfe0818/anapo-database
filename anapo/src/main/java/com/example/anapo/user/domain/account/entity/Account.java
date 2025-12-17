@@ -5,9 +5,6 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
 import lombok.*;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
@@ -40,19 +37,26 @@ public class Account {
     @Column(nullable = false)
     private String sex;
 
+    // ✅ [추가] 역할 구분 (USER 또는 HOSPITAL)
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default // 빌더 패턴 쓸 때 기본값 적용
+    private AccountRole role = AccountRole.USER;
+
     @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private AccountStatus status = AccountStatus.ACTIVE;
 
-    public Account(String userPassword, String userName, String userId, @NotEmpty(message = "전화번호는 필수항목입니다.") @Pattern(regexp = "\\d{10,11}", message = "전화번호 형식은 01012345678이어야 합니다.") String userNumber, String birth, String sex) {
+    // 수동 생성자 (기존 코드 유지하되 role 초기화 추가)
+    public Account(String userPassword, String userName, String userId, String userNumber, String birth, String sex) {
         this.userPassword = userPassword;
         this.userName = userName;
         this.userId = userId;
         this.userNumber = userNumber;
         this.birth = birth;
         this.sex = sex;
-
         this.status = AccountStatus.ACTIVE;
+        this.role = AccountRole.USER; // 기본은 일반 유저
     }
 }

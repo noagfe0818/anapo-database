@@ -19,17 +19,16 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class AccountService {
 
-    // 암호화 도구
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
     private final AccountRepository accountRepository;
 
-    // ✅ [추가] 내 정보 가져오기 (정보 수정 페이지용)
+    // 내 정보 가져오기
     public Account getAccount(Long id) {
         return accountRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("해당 회원이 존재하지 않습니다."));
     }
 
-    // 회원가입
+    // ✅ [수정됨] 회원가입 (Builder 패턴 사용으로 안전하게 변경)
     @Transactional
     public Account join(AccountDto accountDto){
         // 1. 아이디 중복 검사
@@ -42,26 +41,27 @@ public class AccountService {
             throw new PasswordMismatchException("비밀번호가 서로 일치하지 않습니다.");
         }
 
-        // 3. 회원 생성 (비밀번호 암호화)
-        Account account = new Account(
-                encoder.encode(accountDto.getUserPassword()),
-                accountDto.getUserName(),
-                accountDto.getUserId(),
-                accountDto.getUserNumber(),
-                accountDto.getBirth(),
-                accountDto.getSex()
-        );
+        // 3. 회원 생성 (Builder 사용 -> role 기본값 USER 자동 적용됨)
+        Account account = Account.builder()
+                .userId(accountDto.getUserId())
+                .userPassword(encoder.encode(accountDto.getUserPassword())) // 암호화
+                .userName(accountDto.getUserName())
+                .userNumber(accountDto.getUserNumber())
+                .birth(accountDto.getBirth())
+                .sex(accountDto.getSex())
+                // .role(AccountRole.USER) // 엔티티의 @Builder.Default 덕분에 생략해도 자동으로 USER가 됨
+                .build();
 
         return accountRepository.save(account);
     }
 
-    // 사용자 조회 (이름으로 찾기)
+    // 사용자 조회
     public Account getUser(String userName) {
         return accountRepository.findByUserName(userName)
                 .orElseThrow(() -> new DataNotFoundException("사용자를 찾을 수 없습니다."));
     }
 
-    // 로그인
+    // ✅ 로그인 (수정 없음 - 엔티티를 리턴하면 role 정보도 같이 나갑니다!)
     public Account login(AccountDto accountDto) {
         if (accountDto.getUserId() == null || accountDto.getUserPassword() == null) {
             return null;
@@ -71,9 +71,8 @@ public class AccountService {
 
         if (userOp.isPresent()) {
             Account found = userOp.get();
-            // 암호화된 비밀번호 비교
             if(encoder.matches(accountDto.getUserPassword(), found.getUserPassword())) {
-                return found;
+                return found; // 여기서 role이 포함된 Account 객체가 리턴됨
             }
         }
         return null;
@@ -84,32 +83,25 @@ public class AccountService {
         return accountRepository.existsByUserId(userId);
     }
 
-    // ✅ [수정됨] 회원 정보 수정 (비밀번호 암호화 포함)
+    // 회원 정보 수정
     @Transactional
     public Account updateAccount(Long accId, AccountUpdateDto dto) {
         Account account = accountRepository.findById(accId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
 
-        // 1. 이름 변경
         if (dto.getUserName() != null && !dto.getUserName().isEmpty()) {
             account.setUserName(dto.getUserName());
         }
-
-        // 2. 전화번호 변경
         if (dto.getUserNumber() != null && !dto.getUserNumber().isEmpty()) {
             account.setUserNumber(dto.getUserNumber());
         }
-
-        // 3. ★ 비밀번호 변경 (값이 있을 때만 + 암호화 필수!)
         if (dto.getUserPassword() != null && !dto.getUserPassword().isEmpty()) {
             String encodedPwd = encoder.encode(dto.getUserPassword());
             account.setUserPassword(encodedPwd);
         }
-
-        // (생년월일, 성별은 DTO에 값이 있다면 변경)
         if (dto.getBirth() != null) account.setBirth(dto.getBirth());
         if (dto.getSex() != null) account.setSex(dto.getSex());
 
-        return account; // JPA Dirty Checking으로 자동 저장
+        return account;
     }
 }

@@ -1,5 +1,6 @@
 package com.example.anapo.user.application.account.dto;
 
+import com.example.anapo.user.domain.account.entity.AccountRole; // ✅ Import 추가
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -32,19 +33,21 @@ public class AccountDto {
     @NotEmpty(message = "성별은 필수항목입니다.")
     private String sex;
 
-    // 생년월일을 String으로 받아올 때, 예를 들어 'yyyy-MM-dd' 형태로 받음
     @NotEmpty(message = "생년월일은 필수항목입니다.")
     private String birth;
 
-    // 생년월일을 LocalDate로 반환하는 메서드 추가
+    // ✅ [추가됨] 역할 정보 (USER 또는 HOSPITAL)
+    private AccountRole role;
+
+    // 생년월일을 LocalDate로 반환하는 메서드
     public LocalDate getBirthdateAsLocalDate() {
         if (birth != null && !birth.isEmpty()) {
             try {
-                return LocalDate.parse(birth);  // 'yyyy-MM-dd' 형식으로 변환 시도
+                return LocalDate.parse(birth);
             } catch (DateTimeParseException e) {
                 throw new IllegalArgumentException("생년월일을 올바른 형식으로 입력해주세요.");
             }
         }
-        return null;  // 생년월일이 비어있으면 null 반환
+        return null;
     }
 }

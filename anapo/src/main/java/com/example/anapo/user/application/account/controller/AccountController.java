@@ -26,20 +26,20 @@ public class AccountController {
 
     private final AccountService accountService;
 
-    // ✅ [추가됨] 내 정보 불러오기 (정보 수정 페이지 접속 시 사용)
+    // ✅ [수정됨] 내 정보 불러오기 (role 추가)
     @GetMapping("/{id}")
     public ResponseEntity<?> getAccountInfo(@PathVariable Long id) {
         try {
-            // Service에 추가한 getAccount 메서드 사용
             Account account = accountService.getAccount(id);
 
-            // 프론트엔드에 필요한 정보만 골라서 줍니다 (비밀번호 제외)
             Map<String, Object> response = new HashMap<>();
             response.put("userName", account.getUserName());
-            response.put("userId", account.getUserId());     // 아이디(이메일)
-            response.put("userNumber", account.getUserNumber()); // 전화번호
-            response.put("birth", account.getBirth());       // 생년월일
-            response.put("sex", account.getSex());           // 성별
+            response.put("userId", account.getUserId());
+            response.put("userNumber", account.getUserNumber());
+            response.put("birth", account.getBirth());
+            response.put("sex", account.getSex());
+            // ✅ [추가] 내 정보 볼 때도 역할 확인 가능하도록
+            response.put("role", account.getRole());
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -47,11 +47,10 @@ public class AccountController {
         }
     }
 
-    // ✅ [수정됨] 회원 정보 수정 (비밀번호 변경 등)
+    // 회원 정보 수정
     @PatchMapping("/accUpdate/{accId}")
     public ResponseEntity<?> updateAccount(@PathVariable Long accId, @RequestBody AccountUpdateDto dto) {
         try {
-            // Service의 updateAccount 메서드 호출 (비밀번호 암호화 로직 포함됨)
             Account updated = accountService.updateAccount(accId, dto);
 
             return ResponseEntity.ok(Map.of(
@@ -62,10 +61,6 @@ public class AccountController {
             return ResponseEntity.badRequest().body("정보 수정 실패: " + e.getMessage());
         }
     }
-
-    // ========================================================
-    // 👇 기존 기능들 (로그인, 회원가입 등은 그대로 유지)
-    // ========================================================
 
     // 회원가입
     @PostMapping("/join")
@@ -80,7 +75,7 @@ public class AccountController {
         }
     }
 
-    // 로그인
+    // ✅ [수정됨] 로그인 (핵심!)
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody AccountDto accountDto, HttpServletRequest request) {
         try {
@@ -97,12 +92,17 @@ public class AccountController {
                 newSession.setMaxInactiveInterval(1800);
 
                 System.out.println("로그인 성공! User DB ID: " + user.getId());
+                System.out.println("사용자 권한(Role): " + user.getRole()); // 로그로 확인
 
                 Map<String, Object> responseMap = new HashMap<>();
                 responseMap.put("message", "로그인 성공");
-                responseMap.put("id", user.getId());         // 프론트엔드 저장용 ID
+                responseMap.put("id", user.getId());
                 responseMap.put("userId", user.getUserId());
                 responseMap.put("userName", user.getUserName());
+
+                // ✅ [핵심] 드디어 프론트엔드에게 역할을 알려줍니다!
+                // 이게 있어야 프론트에서 if (data.role === "HOSPITAL") 문이 작동합니다.
+                responseMap.put("role", user.getRole());
 
                 return ResponseEntity.ok(responseMap);
 
@@ -126,7 +126,7 @@ public class AccountController {
         return ResponseEntity.ok("로그아웃 되었습니다.");
     }
 
-    // 로그인 상태 확인 (세션 방식용 - 참고용으로 유지)
+    // 로그인 상태 확인
     @GetMapping("/info")
     public ResponseEntity<?> getUserInfo(HttpSession session) {
         Object loggedInUser = session.getAttribute("loggedInUser");
